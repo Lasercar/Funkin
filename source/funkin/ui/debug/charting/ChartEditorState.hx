@@ -4497,8 +4497,8 @@ class ChartEditorState extends UIState // UIState derives from MusicBeatState
   function handleCursor():Void
   {
     // Mouse sounds
-    if (FlxG.mouse.justPressed) FunkinSound.playOnce(Paths.sound("chartingSounds/ClickDown"));
-    if (FlxG.mouse.justReleased) FunkinSound.playOnce(Paths.sound("chartingSounds/ClickUp"));
+    if (FlxG.mouse.justPressed) this.playSound(Paths.sound("chartingSounds/ClickDown"), 1.0, 1.0, 0.2);
+    if (FlxG.mouse.justReleased) this.playSound(Paths.sound("chartingSounds/ClickUp"), 1.0, 1.0, 0.2);
 
     // Note: If a menu is open in HaxeUI, don't handle cursor behavior.
     var shouldHandleCursor:Bool = !(isHaxeUIFocused || playbarHeadDragging || isHaxeUIDialogOpen)
@@ -5063,10 +5063,10 @@ class ChartEditorState extends UIState // UIState derives from MusicBeatState
         }
         var dragDistanceColumns:Int = cursorGridPos - noteGridPos;
 
-        if ((dragTargetCurrentColumn != dragDistanceColumns && overlapsGrid) || dragTargetCurrentStep != dragDistanceSteps)
-        {
-          // Play a sound as we drag.
-          this.playSound(Paths.sound('chartingSounds/noteLay'));
+          if (dragTargetCurrentStep != dragDistanceSteps || dragTargetCurrentColumn != dragDistanceColumns)
+          {
+            // Play a sound as we drag.
+            this.playSound(Paths.sound('chartingSounds/noteLay'), 1.0, 1.0, 0.05);
 
           trace('Dragged ${dragDistanceColumns} X and ${dragDistanceSteps} Y.');
           dragTargetCurrentStep = dragDistanceSteps;
@@ -5085,14 +5085,14 @@ class ChartEditorState extends UIState // UIState derives from MusicBeatState
       var dragLengthMs:Float = dragLengthSteps * Conductor.instance.stepLengthMs;
       var dragLengthPixels:Float = dragLengthSteps * GRID_SIZE;
 
-      if (gridGhostHoldNote != null)
-      {
-        if (dragLengthSteps > 0)
+        if (gridGhostHoldNote != null)
         {
-          if (dragLengthCurrent != dragLengthSteps)
+          if (dragLengthSteps > 0)
           {
-            stretchySounds = !stretchySounds;
-            this.playSound(Paths.sound('chartingSounds/stretch' + (stretchySounds ? '1' : '2') + '_UI'));
+            if (dragLengthCurrent != dragLengthSteps)
+            {
+              stretchySounds = !stretchySounds;
+              this.playSound(Paths.sound('chartingSounds/stretch' + (stretchySounds ? '1' : '2') + '_UI'), 1.0, 1.0, 0.2);
 
             dragLengthCurrent = dragLengthSteps;
           }
@@ -5114,23 +5114,23 @@ class ChartEditorState extends UIState // UIState derives from MusicBeatState
         }
       }
 
-      if (FlxG.mouse.justReleased)
-      {
-        if (dragLengthSteps > 0)
+        if (FlxG.mouse.justReleased)
         {
-          this.playSound(Paths.sound('chartingSounds/stretchSNAP_UI'));
-          // Apply the new length.
-          performCommand(new ExtendNoteLengthCommand(currentPlaceNoteData, dragLengthMs));
-        }
-        else
-        {
-          // Apply the new (zero) length if we are changing the length.
-          if (currentPlaceNoteData.length > 0)
+          if (dragLengthSteps > 0)
           {
-            this.playSound(Paths.sound('chartingSounds/stretchSNAP_UI'));
-            performCommand(new ExtendNoteLengthCommand(currentPlaceNoteData, 0));
+            this.playSound(Paths.sound('chartingSounds/stretchSNAP_UI'), 1.0, 1.0, 0.2);
+            // Apply the new length.
+            performCommand(new ExtendNoteLengthCommand(currentPlaceNoteData, dragLengthMs));
           }
-        }
+          else
+          {
+            // Apply the new (zero) length if we are changing the length.
+            if (currentPlaceNoteData.length > 0)
+            {
+              this.playSound(Paths.sound('chartingSounds/stretchSNAP_UI'), 1.0, 1.0, 0.2);
+              performCommand(new ExtendNoteLengthCommand(currentPlaceNoteData, 0));
+            }
+          }
 
         // Finished dragging. Release the note.
         currentPlaceNoteData = null;
@@ -5261,90 +5261,90 @@ class ChartEditorState extends UIState // UIState derives from MusicBeatState
       {
         // We right clicked on the grid.
 
-        if (highlightedNote != null && highlightedNote.noteData != null)
-        {
-          // TODO: Handle the case of clicking on a sustain piece.
-          if (FlxG.keys.pressed.SHIFT)
+          if (highlightedNote != null && highlightedNote.noteData != null)
           {
-            // Shift + Right click opens the context menu.
-            // If we are clicking a large selection, open the Selection context menu, otherwise open the Note context menu.
-            var isHighlightedNoteSelected:Bool = isNoteSelected(highlightedNote.noteData);
-            var useSingleNoteContextMenu:Bool = (!isHighlightedNoteSelected)
-              || (isHighlightedNoteSelected && currentNoteSelection.length == 1);
-            // Show the context menu connected to the note.
-            if (useSingleNoteContextMenu)
+            // TODO: Handle the case of clicking on a sustain piece.
+            if (FlxG.keys.pressed.SHIFT)
             {
-              // Open the hold note menu instead if the highlighted note has a length value
-              if (highlightedNote.noteData.length > 0) this.openHoldNoteContextMenu(FlxG.mouse.viewX, FlxG.mouse.viewY, highlightedNote.noteData);
+              // Shift + Right click opens the context menu.
+              // If we are clicking a large selection, open the Selection context menu, otherwise open the Note context menu.
+              var isHighlightedNoteSelected:Bool = isNoteSelected(highlightedNote.noteData);
+              var useSingleNoteContextMenu:Bool = (!isHighlightedNoteSelected)
+                || (isHighlightedNoteSelected && currentNoteSelection.length == 1);
+              // Show the context menu connected to the note.
+              if (useSingleNoteContextMenu)
+              {
+                // Open the hold note menu instead if the highlighted note has a length value
+                if (highlightedNote.noteData.length > 0) this.openHoldNoteContextMenu(FlxG.mouse.viewX, FlxG.mouse.viewY, highlightedNote.noteData);
+                else
+                  this.openNoteContextMenu(FlxG.mouse.viewX, FlxG.mouse.viewY, highlightedNote.noteData);
+              }
               else
-                this.openNoteContextMenu(FlxG.mouse.viewX, FlxG.mouse.viewY, highlightedNote.noteData);
+              {
+                this.openSelectionContextMenu(FlxG.mouse.viewX, FlxG.mouse.viewY);
+              }
             }
             else
             {
-              this.openSelectionContextMenu(FlxG.mouse.viewX, FlxG.mouse.viewY);
+              // Right click removes the note.
+              performCommand(new RemoveNotesCommand([highlightedNote.noteData]));
+            }
+          }
+          else if (highlightedEvent != null && highlightedEvent.eventData != null)
+          {
+            if (FlxG.keys.pressed.SHIFT)
+            {
+              // Shift + Right click opens the context menu.
+              // If we are clicking a large selection, open the Selection context menu, otherwise open the Event context menu.
+              var isHighlightedEventSelected:Bool = isEventSelected(highlightedEvent.eventData);
+              var useSingleEventContextMenu:Bool = (!isHighlightedEventSelected)
+                || (isHighlightedEventSelected && currentEventSelection.length == 1);
+              if (useSingleEventContextMenu)
+              {
+                this.openEventContextMenu(FlxG.mouse.viewX, FlxG.mouse.viewY, highlightedEvent.eventData);
+              }
+              else
+              {
+                this.openSelectionContextMenu(FlxG.mouse.viewX, FlxG.mouse.viewY);
+              }
+            }
+            else
+            {
+              // Right click removes the event.
+              performCommand(new RemoveEventsCommand([highlightedEvent.eventData]));
+            }
+          }
+          else if (highlightedHoldNote != null && highlightedHoldNote.noteData != null)
+          {
+            if (FlxG.keys.pressed.SHIFT)
+            {
+              // Shift + Right click opens the context menu.
+              // If we are clicking a large selection, open the Selection context menu, otherwise open the Note context menu.
+              var isHighlightedNoteSelected:Bool = isNoteSelected(highlightedHoldNote.noteData);
+              var useSingleNoteContextMenu:Bool = (!isHighlightedNoteSelected)
+                || (isHighlightedNoteSelected && currentNoteSelection.length == 1);
+              // Show the context menu connected to the note.
+              if (useSingleNoteContextMenu)
+              {
+                this.openHoldNoteContextMenu(FlxG.mouse.viewX, FlxG.mouse.viewY, highlightedHoldNote.noteData);
+              }
+              else
+              {
+                this.openSelectionContextMenu(FlxG.mouse.viewX, FlxG.mouse.viewY);
+              }
+            }
+            else
+            {
+              // Right click removes hold from the note.
+              this.playSound(Paths.sound('chartingSounds/stretchSNAP_UI'), 1.0, 1.0, 0.2);
+              performCommand(new ExtendNoteLengthCommand(highlightedHoldNote.noteData, 0));
             }
           }
           else
           {
-            // Right click removes the note.
-            performCommand(new RemoveNotesCommand([highlightedNote.noteData]));
+            // Right clicked on nothing.
           }
         }
-        else if (highlightedEvent != null && highlightedEvent.eventData != null)
-        {
-          if (FlxG.keys.pressed.SHIFT)
-          {
-            // Shift + Right click opens the context menu.
-            // If we are clicking a large selection, open the Selection context menu, otherwise open the Event context menu.
-            var isHighlightedEventSelected:Bool = isEventSelected(highlightedEvent.eventData);
-            var useSingleEventContextMenu:Bool = (!isHighlightedEventSelected)
-              || (isHighlightedEventSelected && currentEventSelection.length == 1);
-            if (useSingleEventContextMenu)
-            {
-              this.openEventContextMenu(FlxG.mouse.viewX, FlxG.mouse.viewY, highlightedEvent.eventData);
-            }
-            else
-            {
-              this.openSelectionContextMenu(FlxG.mouse.viewX, FlxG.mouse.viewY);
-            }
-          }
-          else
-          {
-            // Right click removes the event.
-            performCommand(new RemoveEventsCommand([highlightedEvent.eventData]));
-          }
-        }
-        else if (highlightedHoldNote != null && highlightedHoldNote.noteData != null)
-        {
-          if (FlxG.keys.pressed.SHIFT)
-          {
-            // Shift + Right click opens the context menu.
-            // If we are clicking a large selection, open the Selection context menu, otherwise open the Note context menu.
-            var isHighlightedNoteSelected:Bool = isNoteSelected(highlightedHoldNote.noteData);
-            var useSingleNoteContextMenu:Bool = (!isHighlightedNoteSelected)
-              || (isHighlightedNoteSelected && currentNoteSelection.length == 1);
-            // Show the context menu connected to the note.
-            if (useSingleNoteContextMenu)
-            {
-              this.openHoldNoteContextMenu(FlxG.mouse.viewX, FlxG.mouse.viewY, highlightedHoldNote.noteData);
-            }
-            else
-            {
-              this.openSelectionContextMenu(FlxG.mouse.viewX, FlxG.mouse.viewY);
-            }
-          }
-          else
-          {
-            // Right click removes hold from the note.
-            this.playSound(Paths.sound('chartingSounds/stretchSNAP_UI'));
-            performCommand(new ExtendNoteLengthCommand(highlightedHoldNote.noteData, 0));
-          }
-        }
-        else
-        {
-          // Right clicked on nothing.
-        }
-      }
 
       var isOrWillSelect = overlapsSelection || dragTargetNote != null || dragTargetEvent != null || overlapsRenderedNotes || overlapsRenderedHoldNotes
         || overlapsRenderedEvents;
@@ -5771,7 +5771,7 @@ class ChartEditorState extends UIState // UIState derives from MusicBeatState
         if (playheadDragLengthCurrent[column] != targetNoteLengthStepsInt)
         {
           stretchySounds = !stretchySounds;
-          this.playSound(Paths.sound('chartingSounds/stretch' + (stretchySounds ? '1' : '2') + '_UI'));
+          this.playSound(Paths.sound('chartingSounds/stretch' + (stretchySounds ? '1' : '2') + '_UI'), 1.0, 1.0, 0.2);
           playheadDragLengthCurrent[column] = targetNoteLengthStepsInt;
         }
         ghostHold.visible = true;
@@ -5813,7 +5813,7 @@ class ChartEditorState extends UIState // UIState derives from MusicBeatState
     {
       // Extend the note to the playhead position.
       trace('Extending note. ${column}');
-      this.playSound(Paths.sound('chartingSounds/stretchSNAP_UI'));
+      this.playSound(Paths.sound('chartingSounds/stretchSNAP_UI'), 1.0, 1.0, 0.2);
       performCommand(new ExtendNoteLengthCommand(currentLiveInputPlaceNoteData[column], newNoteLength));
       currentLiveInputPlaceNoteData[column] = null;
       gridPlayheadGhostHoldNotes[column].noteData = null;
@@ -6998,9 +6998,9 @@ class ChartEditorState extends UIState // UIState derives from MusicBeatState
       if (hitsoundsEnabled) switch (noteData.getStrumlineIndex())
       {
         case 0: // Player
-          if (hitsoundVolumePlayer > 0) this.playSound(Paths.sound('chartingSounds/hitNotePlayer'), hitsoundVolumePlayer);
+          if (hitsoundVolumePlayer > 0) this.playSound(Paths.sound('chartingSounds/hitNotePlayer'), hitsoundVolumePlayer, 1.0, 0.1);
         case 1: // Opponent
-          if (hitsoundVolumeOpponent > 0) this.playSound(Paths.sound('chartingSounds/hitNoteOpponent'), hitsoundVolumeOpponent);
+          if (hitsoundVolumeOpponent > 0) this.playSound(Paths.sound('chartingSounds/hitNoteOpponent'), hitsoundVolumeOpponent, 1.0, 0.1);
       }
     }
     // Clearing memory before next event call.
