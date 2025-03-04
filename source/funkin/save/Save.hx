@@ -172,6 +172,8 @@ class Save implements ConsoleClass
           playtestStartTime: false,
           playtestAudioSettings: false,
           downscroll: false,
+          hitsoundPitchNoteDirection: false,
+          randomPitch: true,
           showNoteKinds: true,
           metronomeVolume: 1.0,
           hitsoundVolumePlayer: 1.0,
@@ -305,6 +307,12 @@ class Save implements ConsoleClass
 
   @:saveProperty(data.optionsChartEditor.opponentVoiceVolume, 1.0)
   public var chartEditorOpponentVoiceVolume:SaveProperty<Float>;
+
+  @:saveProperty(data.optionsChartEditor.hitsoundPitchNoteDirection, false)
+  public var chartEditorHitsoundPitchNoteDirection(get, set):Bool;
+
+  @:saveProperty(data.optionsChartEditor.randomPitch, true)
+  public var chartEditorRandomPitch(get, set):Bool;
 
   @:saveProperty(data.optionsChartEditor.themeMusic, true)
   public var chartEditorThemeMusic:SaveProperty<Bool>;
@@ -1403,10 +1411,16 @@ typedef SaveDataChartEditorOptions =
   var ?showNoteKinds:Bool;
 
   /**
-   * Show Subtitles in the Chart Editor.
+   * Pitch the hitsound by note direction in the Chart editor.
+   * @default `false`
+   */
+  var ?hitsoundPitchNoteDirection:Bool;
+
+  /**
+   * Random pitch for sounds in the Chart Editor.
    * @default `true`
    */
-  var ?showSubtitles:Bool;
+  var ?randomPitch:Bool;
 
   /**
    * Metronome volume in the Chart Editor.
