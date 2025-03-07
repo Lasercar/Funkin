@@ -9,6 +9,8 @@ class CharSelectPlayer extends FunkinSprite implements IBPMSyncedScriptedClass
 {
   static final DEFAULT_PATH = "charSelect/bfChill";
 
+  var pressedSelect:Bool = false;
+
   var initialX:Float = 0;
   var initialY:Float = 0;
 
@@ -33,7 +35,14 @@ class CharSelectPlayer extends FunkinSprite implements IBPMSyncedScriptedClass
         case "slidein":
           if (hasAnimation("slidein idle point"))
           {
-            anim.play("slidein idle point", true);
+
+            if (pressedSelect)
+            {
+              anim.play("select");
+              pressedSelect = false;
+            }
+            else
+              anim.play("slidein idle point", true);;
           }
           else
           {
@@ -75,7 +84,7 @@ class CharSelectPlayer extends FunkinSprite implements IBPMSyncedScriptedClass
     }
   };
 
-  public function switchChar(str:String, playSlideAnim:Bool = true):Void
+  public function switchChar(str:String, playSlideAnim:Bool = true, pressedSelect:Bool = false):Void
   {
     var texture:Null<animate.FlxAnimateFrames> = CharSelectAtlasHandler.loadAtlas('charSelect/${str}Chill');
 
@@ -88,6 +97,8 @@ class CharSelectPlayer extends FunkinSprite implements IBPMSyncedScriptedClass
       trace('Failed to load character atlas for ${str}');
       return;
     }
+
+    this.pressedSelect = pressedSelect;
 
     final animName:String = playSlideAnim ? "slidein" : "idle";
     anim.play(animName, true);
