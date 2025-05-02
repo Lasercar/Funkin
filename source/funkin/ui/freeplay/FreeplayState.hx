@@ -295,6 +295,7 @@ class FreeplayState extends MusicBeatSubState
 
     // Block input until the intro finishes.
     busy = true;
+    letterSort.inputEnabled = false;
 
     // Add a null entry that represents the RANDOM option
     songs.push(null);
@@ -579,7 +580,6 @@ class FreeplayState extends MusicBeatSubState
     // be careful not to "add()" things in here unless it's to a group that's already added to the state
     // otherwise it won't be properly attatched to funnyCamera (relavent code should be at the bottom of create())
     var onDJIntroDone = function() {
-      busy = false;
 
       // when boyfriend hits dat shiii
 
@@ -589,6 +589,9 @@ class FreeplayState extends MusicBeatSubState
 
       if (!fromCharSelect)
       {
+        busy = false;
+        letterSort.inputEnabled = true;
+
         // render optimisation
         if (_parentState != null) _parentState.persistentDraw = false;
 
@@ -1233,6 +1236,7 @@ class FreeplayState extends MusicBeatSubState
   function enterFromCharSel():Void
   {
     busy = true;
+    letterSort.inputEnabled = false;
     if (_parentState != null) _parentState.persistentDraw = false;
 
     var transitionGradient = new FlxSprite(0, 720).loadGraphic(Paths.image('freeplay/transitionGradient'));
@@ -1282,11 +1286,16 @@ class FreeplayState extends MusicBeatSubState
           {
             ease: FlxEase.expoOut,
             onComplete: function(_) {
-              for (index => capsule in grpCapsules.members)
+              if (fromCharSelect)
               {
-                capsule.doLerp = true;
+                // This code only needs to be run once (otherwise it causes problems).
+                for (index => capsule in grpCapsules.members)
+                {
+                  capsule.doLerp = true;
+                }
                 fromCharSelect = false;
                 busy = false;
+                letterSort.inputEnabled = true;
               }
             }
           });
