@@ -2175,6 +2175,13 @@ class FreeplayState extends MusicBeatSubState
   }
   #end
 
+  override function beatHit():Bool
+  {
+    grpCapsules?.members[0]?.randomiseDisplay();
+
+    return super.beatHit();
+  }
+
   public override function destroy():Void
   {
     super.destroy();
@@ -3130,10 +3137,13 @@ class DifficultySelector extends FlxSprite
 
   override function update(elapsed:Float):Void
   {
+    Conductor.instance.update();
+
     if (!uiStateMachine.canInteract()) return;
 
     if (flipX && controls.UI_RIGHT_P) moveShitDown();
     if (!flipX && controls.UI_LEFT_P) moveShitDown();
+
     super.update(elapsed);
   }
 
