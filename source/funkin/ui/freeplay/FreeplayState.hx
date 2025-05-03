@@ -2548,12 +2548,12 @@ class FreeplayState extends MusicBeatSubState
     var instrumentalChoices:Array<String> = ['default', 'random'];
 
     #if !mobile
-    instSelectMenu = new CapsuleOptionsMenu(this, randomCapsule.targetPos.x + 175, randomCapsule.targetPos.y + 115, instrumentalChoices);
-    instSelectMenu.cameras = [funnyCam];
-    instSelectMenu.zIndex = 10000;
-    add(instSelectMenu);
+    capsuleOptionsMenu = new CapsuleOptionsMenu(this, randomCapsule.targetPos.x + 175, randomCapsule.targetPos.y + 115, instrumentalChoices);
+    capsuleOptionsMenu.cameras = [funnyCam];
+    capsuleOptionsMenu.zIndex = 10000;
+    add(capsuleOptionsMenu);
 
-    instSelectMenu.onConfirm = function(instChoice:String) {
+    capsuleOptionsMenu.onConfirm = function(instChoice:String) {
       capsuleOnConfirmRandom(availableSongCapsules, instChoice);
     }
     #else
@@ -2566,7 +2566,7 @@ class FreeplayState extends MusicBeatSubState
    */
   function capsuleOnConfirmRandom(availableSongCapsules:Array<SongMenuItem>, instChoice:String):Void
   {
-    cleanupInstSelectMenu();
+    cleanupCapsuleOptionsMenu();
 
     var targetSongCap:SongMenuItem = FlxG.random.getObject(availableSongCapsules);
     // Seeing if I can do an animation...
@@ -2645,6 +2645,13 @@ class FreeplayState extends MusicBeatSubState
     trace('target difficulty: ${targetDifficultyId}');
     trace('target variation: ${targetDifficulty?.variation ?? Constants.DEFAULT_VARIATION}');
 
+    // Open a CapsuleOptionsMenu instead where you decide whether to actually delete the data of the song or not.
+    if (FlxG.keys.pressed.DELETE)
+    {
+      openDeleteSongDataOption(cap, targetSongId);
+      return;
+    }
+
     var baseInstrumentalId:String = targetSong.getBaseInstrumentalId(targetDifficultyId, targetDifficulty?.variation ?? Constants.DEFAULT_VARIATION) ?? '';
     var altInstrumentalIds:Array<String> = targetSong.listAltInstrumentalIds(targetDifficultyId,
       targetDifficulty?.variation ?? Constants.DEFAULT_VARIATION) ?? [];
@@ -2662,30 +2669,69 @@ class FreeplayState extends MusicBeatSubState
     capsuleOnConfirmDefault(cap);
   }
 
-  function openInstrumentalList(cap:SongMenuItem, instrumentalIds:Array<String>):Void
+  public function getControls():Controls
+  {
+    return controls;
+  }
+
+  function openDeleteSongDataOption(cap:SongMenuItem, targetSongId:String):Void
   {
     uiStateMachine.transition(Interacting);
 
-    instSelectMenu = new CapsuleOptionsMenu(this, cap.targetPos.x + 175, cap.targetPos.y + 115, instrumentalIds);
-    instSelectMenu.cameras = [funnyCam];
-    instSelectMenu.zIndex = 10000;
-    add(instSelectMenu);
+    capsuleOptionsMenu = new CapsuleOptionsMenu(this, cap.targetPos.x + 175, cap.targetPos.y + 115, ["Funk NO!", "True.."], 'DELETE SONG DATA?');
+    capsuleOptionsMenu.cameras = [funnyCam];
+    capsuleOptionsMenu.zIndex = 10000;
+    add(capsuleOptionsMenu);
 
-    instSelectMenu.onConfirm = function(targetInstId:String) {
+    capsuleOptionsMenu.onConfirm = function(targetOption:String) {
+      if (targetOption == "True..") Save.instance.setSongScore(targetSongId, currentDifficulty,
+        {
+          // Zer0.
+          score: 0,
+          tallies:
+            {
+              sick: 0,
+              good: 0,
+              bad: 0,
+              shit: 0,
+              missed: 0,
+              combo: 0,
+              maxCombo: 0,
+              totalNotesHit: 0,
+              totalNotes: 0,
+            },
+        });
+      cleanupCapsuleOptionsMenu();
+      // Refresh the song to update the score.
+      changeSelection();
+    };
+  }
+
+  function openInstrumentalList(cap:SongMenuItem, instrumentalIds:Array<String>):Void
+  {
+
+    uiStateMachine.transition(Interacting);
+
+    capsuleOptionsMenu = new CapsuleOptionsMenu(this, cap.targetPos.x + 175, cap.targetPos.y + 115, instrumentalIds, 'INSTRUMENTAL');
+    capsuleOptionsMenu.cameras = [funnyCam];
+    capsuleOptionsMenu.zIndex = 10000;
+    add(capsuleOptionsMenu);
+
+    capsuleOptionsMenu.onConfirm = function(targetInstId:String) {
       capsuleOnConfirmDefault(cap, targetInstId);
     };
   }
 
-  var instSelectMenu:Null<CapsuleOptionsMenu> = null;
+  var capsuleOptionsMenu:Null<CapsuleOptionsMenu> = null;
 
-  public function cleanupInstSelectMenu():Void
+  public function cleanupCapsuleOptionsMenu():Void
   {
     uiStateMachine.transition(Idle);
 
-    if (instSelectMenu != null)
+    if (capsuleOptionsMenu != null)
     {
-      remove(instSelectMenu);
-      instSelectMenu = null;
+      remove(capsuleOptionsMenu);
+      capsuleOptionsMenu = null;
     }
   }
 

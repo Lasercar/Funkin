@@ -20,14 +20,16 @@ class CapsuleOptionsMenu extends FlxSpriteGroup
 
   var queueDestroy:Bool = false;
 
-  var instrumentalIds:Array<String> = [''];
-  var currentInstrumentalIndex:Int = 0;
+  var options:Array<String> = [''];
+  var currentOptionIndex:Int = 0;
 
-  var currentInstrumental:FlxText;
+  var currentOption:FlxText;
 
   var busy:Bool = false;
-  var leftArrow:InstrumentalSelector;
-  var rightArrow:InstrumentalSelector;
+
+  var leftArrow:OptionSelector;
+
+  var rightArrow:OptionSelector;
 
   public function setBusy(b:Bool):Void
   {
@@ -36,12 +38,12 @@ class CapsuleOptionsMenu extends FlxSpriteGroup
     rightArrow.busy = b;
   }
 
-  public function new(parent:FreeplayState, x:Float = 0, y:Float = 0, instIds:Array<String>):Void
+  public function new(parent:FreeplayState, x:Float = 0, y:Float = 0, options:Array<String>, labelText:String):Void
   {
     super(x, y);
 
     this.parent = parent;
-    this.instrumentalIds = instIds;
+    this.options = options;
 
     capsuleMenuBG = FunkinSprite.createSparrow(0, 0, 'freeplay/instBox/instBox');
 
@@ -49,24 +51,24 @@ class CapsuleOptionsMenu extends FlxSpriteGroup
     capsuleMenuBG.animation.addByPrefix('idle', 'idle0', 24, true);
     capsuleMenuBG.animation.addByPrefix('open', 'open0', 24, false);
 
-    currentInstrumental = new FlxText(0, 36, capsuleMenuBG.width, '');
-    currentInstrumental.setFormat('VCR OSD Mono', 40, FlxTextAlign.CENTER, true);
+    currentOption = new FlxText(0, 36, capsuleMenuBG.width, '');
+    currentOption.setFormat('VCR OSD Mono', 40, FlxTextAlign.CENTER, true);
 
     final PAD = 4;
 
     @:privateAccess
-    leftArrow = new InstrumentalSelector(parent, PAD, 30, false, parent.controls);
+    leftArrow = new OptionSelector(parent, PAD, 30, false, parent.controls);
     @:privateAccess
-    rightArrow = new InstrumentalSelector(parent, capsuleMenuBG.width - leftArrow.width - PAD, 30, true, parent.controls);
+    rightArrow = new OptionSelector(parent, capsuleMenuBG.width - leftArrow.width - PAD, 30, true, parent.controls);
 
-    var label:FlxText = new FlxText(0, 5, capsuleMenuBG.width, 'INSTRUMENTAL');
+    var label:FlxText = new FlxText(0, 5, capsuleMenuBG.width, labelText);
     label.setFormat('VCR OSD Mono', 24, FlxTextAlign.CENTER, true);
 
     add(capsuleMenuBG);
     add(leftArrow);
     add(rightArrow);
     add(label);
-    add(currentInstrumental);
+    add(currentOption);
 
     capsuleMenuBG.animation.onFinish.add(function(_) {
       capsuleMenuBG.animation.play('idle', true);
@@ -83,7 +85,7 @@ class CapsuleOptionsMenu extends FlxSpriteGroup
       destroy();
       return;
     }
-    var changedInst:Bool = false;
+    var changedOption:Bool = false;
     @:privateAccess
     if (!busy)
     {
@@ -96,29 +98,29 @@ class CapsuleOptionsMenu extends FlxSpriteGroup
 
       if (parent.controls.UI_LEFT_P #if mobile || TouchUtil.pressAction(leftArrow) #end)
       {
-        currentInstrumentalIndex = (currentInstrumentalIndex + 1) % instrumentalIds.length;
-        changedInst = true;
+        currentOptionIndex = (currentOptionIndex + 1) % options.length;
+        changedOption = true;
       }
       if (parent.controls.UI_RIGHT_P #if mobile || TouchUtil.pressAction(rightArrow) #end)
       {
-        currentInstrumentalIndex = (currentInstrumentalIndex - 1 + instrumentalIds.length) % instrumentalIds.length;
-        changedInst = true;
+        currentOptionIndex = (currentOptionIndex - 1 + options.length) % options.length;
+        changedOption = true;
       }
       if (parent.controls.ACCEPT_P #if mobile
-        || ((TouchUtil.pressAction(currentInstrumental))
+        || ((TouchUtil.pressAction(currentOptionIndex))
           && !(TouchUtil.overlapsComplex(leftArrow) || TouchUtil.overlapsComplex(rightArrow))) #end)
       {
         setBusy(true);
-        onConfirm(instrumentalIds[currentInstrumentalIndex] ?? '');
+        onConfirm(options[currentOptionIndex] ?? '');
       }
     }
 
-    if (!changedInst && currentInstrumental.text == '') changedInst = true;
+    if (!changedOption && currentOption.text == '') changedOption = true;
 
-    if (changedInst)
+    if (changedOption)
     {
-      currentInstrumental.text = instrumentalIds[currentInstrumentalIndex].toTitleCase() ?? '';
-      if (currentInstrumental.text == '') currentInstrumental.text = 'Default';
+      currentOption.text = options[currentOptionIndex].toTitleCase() ?? '';
+      if (currentOption.text == '') currentOption.text = 'Default';
     }
   }
 
@@ -137,7 +139,7 @@ class CapsuleOptionsMenu extends FlxSpriteGroup
   /**
    * Override this with `capsuleOptionsMenu.onConfirm = myFunction;`
    */
-  public dynamic function onConfirm(targetInstId:String):Void
+  public dynamic function onConfirm(targetOption:String):Void
   {
     throw 'onConfirm not implemented!';
   }
@@ -146,8 +148,7 @@ class CapsuleOptionsMenu extends FlxSpriteGroup
 /**
  * The difficulty selector arrows to the left and right of the difficulty.
  */
-@:nullSafety
-class InstrumentalSelector extends FunkinSprite
+class OptionSelector extends FunkinSprite
 {
   var controls:Controls;
   var whiteShader:PureColor;
@@ -198,6 +199,7 @@ class InstrumentalSelector extends FunkinSprite
 
     scale.x = scale.y = 0.5 * baseScale;
 
+    if (moveShitDownTimer != null) moveShitDownTimer.cancel();
     moveShitDownTimer = new FlxTimer().start(2 / 24, function(tmr) {
       scale.x = scale.y = 1 * baseScale;
       whiteShader.colorSet = false;
