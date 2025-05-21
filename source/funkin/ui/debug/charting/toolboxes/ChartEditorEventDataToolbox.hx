@@ -26,11 +26,15 @@ import haxe.ui.data.ArrayDataSource;
 @:build(haxe.ui.ComponentBuilder.build("assets/exclude/data/ui/chart-editor/toolboxes/event-data.xml"))
 class ChartEditorEventDataToolbox extends ChartEditorBaseToolbox
 {
-  var toolboxEventsEventKind:DropDown;
+  var toolboxEventsModifyAllEvents:CheckBox;
   var toolboxEventsDataFrame:Frame;
   var toolboxEventsDataBox:VBox;
+  var toolboxEventsSelectedEvents:DropDown;
+  var selectedEventDropdownItemRenderer:haxe.ui.core.ItemRenderer;
+  var toolboxEventsDataGrid:Grid;
 
   var _initializing:Bool = true;
+  var populateSelectedEventsDropDown:Bool = true;
 
   /**
    * If `true`, changing the value of the Event Kind dropdown will trigger the `onEventKindChanged` callback,
@@ -59,6 +63,8 @@ class ChartEditorEventDataToolbox extends ChartEditorBaseToolbox
   {
     super(chartEditorState2);
 
+    selectedEventDropdownItemRenderer = toolboxEventsSelectedEvents.findComponent(haxe.ui.core.ItemRenderer);
+
     initialize();
 
     this.onDialogClosed = onClose;
@@ -75,6 +81,24 @@ class ChartEditorEventDataToolbox extends ChartEditorBaseToolbox
   {
     toolboxEventsEventKind.onChange = onEventKindChanged;
     shouldTriggerOnEventKindChanged = false;
+
+    toolboxEventsSelectedEvents.onChange = function(event:UIEvent) {
+      // Forced to pass event.target.value.id rather than the selectedIndex due to it not getting set at all in refreshSelectedEvents for no reason.
+      var selectedEvent = chartEditorState.currentEventSelection[Std.parseInt(event.target.value.id)];
+      if (selectedEvent != null)
+      {
+        chartEditorState.eventKindToPlace = selectedEvent.eventKind;
+        chartEditorState.eventDataToPlace = selectedEvent.value;
+
+        // This bool prevents the selected event from having it's data overridden (and unnecessary code execution). Look, it works, don't question it.
+        populateSelectedEventsDropDown = false;
+
+        refresh();
+
+        populateSelectedEventsDropDown = true;
+      }
+    }
+    refreshSelectedEvents();
 
     var startingEventValue = ChartEditorDropdowns.populateDropdownWithSongEvents(toolboxEventsEventKind, chartEditorState.eventKindToPlace);
     trace(' CHART EDITOR '.bold().bg_bright_yellow() + 'Building Event toolbox with kind "${startingEventValue}"');
@@ -110,9 +134,9 @@ class ChartEditorEventDataToolbox extends ChartEditorBaseToolbox
     if (!sameEvent) chartEditorState.eventDataToPlace = {};
     buildEventDataFormFromSchema(toolboxEventsDataBox, schema, chartEditorState.eventKindToPlace);
 
-    if (!_initializing && chartEditorState.currentEventSelection.length > 0)
-    {
-      // Edit the event data of any selected events.
+    if (!_initializing && toolboxEventsModifyAllEvents.selected && chartEditorState.currentEventSelection.length > 0)
+      {
+      // Edit the event data of all selected events.
       trace(' CHART EDITOR '.bold().bg_bright_yellow() + 'Event toolbox MODIFYING events to kind "${chartEditorState.eventKindToPlace}"');
       for (event in chartEditorState.currentEventSelection)
       {
@@ -122,7 +146,17 @@ class ChartEditorEventDataToolbox extends ChartEditorBaseToolbox
       chartEditorState.saveDataDirty = true;
       chartEditorState.noteDisplayDirty = true;
       chartEditorState.notePreviewDirty = true;
+      chartEditorState.noteTooltipsDirty = true;
     }
+  }
+
+  function refreshSelectedEvents(startingChartEvent:Int = 0):Void
+  {
+    var startingSelectedEvent = ChartEditorDropdowns.populateDropdownWithChartEvents(toolboxEventsSelectedEvents, chartEditorState, startingChartEvent);
+    // Why does this particular selectedIndex refuse to be set more than once??????
+    toolboxEventsSelectedEvents.selectedIndex = Std.parseInt(startingSelectedEvent.id);
+    toolboxEventsSelectedEvents.value = startingSelectedEvent;
+    selectedEventDropdownItemRenderer.data = startingSelectedEvent;
   }
 
   public override function refresh():Void
@@ -130,6 +164,8 @@ class ChartEditorEventDataToolbox extends ChartEditorBaseToolbox
     super.refresh();
 
     shouldTriggerOnEventKindChanged = false;
+
+    if (populateSelectedEventsDropDown) refreshSelectedEvents();
 
     var newDropdownElement = ChartEditorDropdowns.findDropdownElement(chartEditorState.eventKindToPlace, toolboxEventsEventKind);
 
@@ -355,14 +391,26 @@ class ChartEditorEventDataToolbox extends ChartEditorBaseToolbox
           chartEditorState.eventDataToPlace.set(event.target.id, value);
         }
 
-        // Edit the event data of any existing events.
         if (!_initializing && chartEditorState.currentEventSelection.length > 0)
         {
-          trace(' CHART EDITOR '.bold().bg_bright_yellow() + 'Event Toolbox MODIFYING all selected events...');
-          for (songEvent in chartEditorState.currentEventSelection)
+          if (toolboxEventsModifyAllEvents.selected)
           {
-            songEvent.eventKind = chartEditorState.eventKindToPlace;
-            songEvent.value = Reflect.copy(chartEditorState.eventDataToPlace);
+            // Edit the event data of any existing events of the same type.
+            trace(' CHART EDITOR '.bold().bg_bright_yellow() + 'Event Toolbox MODIFYING all selected events...');
+            for (event in chartEditorState.currentEventSelection)
+            {
+              if (event.eventKind == chartEditorState.eventKindToPlace) event.value = chartEditorState.eventDataToPlace;
+            }
+          }
+          else
+          {
+            // Find the currently selected event and update it's values.
+            var event = chartEditorState.currentEventSelection[toolboxEventsSelectedEvents.selectedIndex];
+            if (event != null)
+            {
+              event.eventKind = chartEditorState.eventKindToPlace;
+              event.value = Reflect.copy(chartEditorState.eventDataToPlace);
+            }
           }
           chartEditorState.saveDataDirty = true;
           chartEditorState.noteDisplayDirty = true;
