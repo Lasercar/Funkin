@@ -7,6 +7,9 @@ import funkin.ui.debug.charting.commands.CutItemsCommand;
 import funkin.ui.debug.charting.commands.RemoveEventsCommand;
 import funkin.ui.debug.charting.commands.RemoveItemsCommand;
 import funkin.ui.debug.charting.commands.RemoveNotesCommand;
+import funkin.ui.debug.charting.commands.SnapEventsCommand;
+import funkin.ui.debug.charting.commands.SnapItemsCommand;
+import funkin.ui.debug.charting.commands.SnapNotesCommand;
 import funkin.ui.debug.charting.commands.FlipNotesCommand;
 import funkin.ui.debug.charting.commands.MirrorNotesCommand;
 import funkin.ui.debug.charting.commands.SelectAllItemsCommand;
@@ -21,6 +24,7 @@ class ChartEditorSelectionContextMenu extends ChartEditorBaseContextMenu
   var contextmenuCopy:MenuItem;
   var contextmenuPaste:MenuItem;
   var contextmenuDelete:MenuItem;
+  var contextmenuSnap:MenuItem;
   var contextmenuFlip:MenuItem;
   var contextmenuMirrorX:MenuItem;
   var contextmenuMirrorY:MenuItem;
@@ -63,6 +67,22 @@ class ChartEditorSelectionContextMenu extends ChartEditorBaseContextMenu
         // Do nothing???
       }
     };
+
+    contextmenuSnap.onClick = function(_) {
+      if (chartEditorState.currentNoteSelection.length > 0 && chartEditorState.currentEventSelection.length > 0)
+      {
+        chartEditorState.performCommand(new SnapItemsCommand(chartEditorState.currentNoteSelection, chartEditorState.currentEventSelection,
+          chartEditorState.noteSnapRatio));
+      }
+      else if (chartEditorState.currentNoteSelection.length > 0)
+      {
+        chartEditorState.performCommand(new SnapNotesCommand(chartEditorState.currentNoteSelection, chartEditorState.noteSnapRatio));
+      }
+      else if (chartEditorState.currentEventSelection.length > 0)
+      {
+        chartEditorState.performCommand(new SnapEventsCommand(chartEditorState.currentEventSelection, chartEditorState.noteSnapRatio));
+      }
+    }
 
     contextmenuFlip.onClick = function(_) {
       chartEditorState.performCommand(new FlipNotesCommand(chartEditorState.currentNoteSelection));
