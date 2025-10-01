@@ -201,21 +201,7 @@ class StageEditorState extends UIState
     if (!saved)
     {
       autoSaveTimer.start(Constants.AUTOSAVE_TIMER_DELAY_SEC, function(tmr:FlxTimer) {
-        FileUtil.createDirIfNotExists(BACKUPS_PATH);
-
-        var data = this.packShitToZip();
-        var path = haxe.io.Path.join([
-          BACKUPS_PATH,
-          'stage-editor-${stageName}-${funkin.util.DateUtil.generateTimestamp()}.${FileUtil.FILE_EXTENSION_INFO_FNFS.extension}'
-        ]);
-
-        FileUtil.writeBytesToPath(path, data);
-        saved = true;
-
-        Save.instance.stageEditorHasBackup = true;
-        Save.instance.flush();
-
-        notifyChange("Auto-Save", "A Backup of this Stage has been made.");
+        saveBackup();
       });
     }
 
@@ -827,7 +813,7 @@ class StageEditorState extends UIState
     if (!saved)
     {
       trace("You haven't saved recently, so a backup will be made.");
-      autoSaveTimer.onComplete(autoSaveTimer);
+      saveBackup();
     }
   }
 
@@ -838,7 +824,7 @@ class StageEditorState extends UIState
     if (!saved)
     {
       trace("You haven't saved recently, so a backup will be made.");
-      autoSaveTimer.onComplete(autoSaveTimer);
+      saveBackup();
     }
   }
 
@@ -1264,7 +1250,7 @@ class StageEditorState extends UIState
                 exitConfirmDialog = null;
                 if (btn == DialogButton.YES)
                 {
-                  saved = true;
+                  saveBackup();
                   onMenuItemClick("exit");
                 }
             });
@@ -1467,6 +1453,25 @@ class StageEditorState extends UIState
           updateDialog(StageEditorDialogType.STAGE);
         }
     }
+  }
+
+  function saveBackup()
+  {
+    FileUtil.createDirIfNotExists(BACKUPS_PATH);
+
+    var data = this.packShitToZip();
+    var path = haxe.io.Path.join([
+      BACKUPS_PATH,
+      'stage-editor-${stageName}-${funkin.util.DateUtil.generateTimestamp()}.${FileUtil.FILE_EXTENSION_INFO_FNFS.extension}'
+    ]);
+
+    FileUtil.writeBytesToPath(path, data);
+    saved = true;
+
+    Save.instance.stageEditorHasBackup = true;
+    Save.instance.flush();
+
+    notifyChange("Auto-Save", "A Backup of this Stage has been made.");
   }
 
   public function clearAssets()
