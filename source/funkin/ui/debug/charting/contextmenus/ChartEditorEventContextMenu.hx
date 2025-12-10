@@ -2,7 +2,7 @@ package funkin.ui.debug.charting.contextmenus;
 
 #if FEATURE_CHART_EDITOR
 import haxe.ui.containers.menus.MenuItem;
-import haxe.ui.containers.properties.Property;
+import haxe.ui.components.NumberStepper;
 import haxe.ui.components.DropDown;
 import haxe.ui.components.Label;
 import haxe.ui.core.Screen;
@@ -16,7 +16,7 @@ import funkin.ui.debug.charting.commands.RemoveEventsCommand;
 class ChartEditorEventContextMenu extends ChartEditorBaseContextMenu
 {
   var contextmenuEventKind:Label;
-  var contextmenuPosition:Property;
+  var contextmenuPosition:NumberStepper;
   var contextmenuUnit:DropDown;
   var contextmenuEdit:MenuItem;
   var contextmenuDelete:MenuItem;
@@ -51,7 +51,7 @@ class ChartEditorEventContextMenu extends ChartEditorBaseContextMenu
       switch (contextmenuUnit.value.id)
       {
         case "MILLISECONDS":
-          contextmenuPosition.label = "Time (MS)";
+          contextmenuUnit.text = "Time (MS)";
           if (contextmenuPosition.value != data.time)
           {
             contextmenuPosition.pauseEvent(UIEvent.CHANGE, true);
@@ -60,7 +60,7 @@ class ChartEditorEventContextMenu extends ChartEditorBaseContextMenu
           }
 
         case "STEPS":
-          contextmenuPosition.label = "Time (Steps)";
+          contextmenuUnit.text = "Time (Steps)";
           if (contextmenuPosition.value != (Math.round(data.getStepTime() / chartEditorState.noteSnapRatio) * chartEditorState.noteSnapRatio))
           {
             contextmenuPosition.pauseEvent(UIEvent.CHANGE, true);
@@ -69,7 +69,7 @@ class ChartEditorEventContextMenu extends ChartEditorBaseContextMenu
           }
 
         default:
-          contextmenuPosition.label = "Time (MS)";
+          contextmenuUnit.text = "Time (MS)";
           if (contextmenuPosition.value != data.time)
           {
             contextmenuPosition.pauseEvent(UIEvent.CHANGE, true);

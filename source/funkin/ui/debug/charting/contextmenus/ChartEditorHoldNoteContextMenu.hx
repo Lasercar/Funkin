@@ -2,7 +2,7 @@ package funkin.ui.debug.charting.contextmenus;
 
 #if FEATURE_CHART_EDITOR
 import haxe.ui.containers.menus.MenuItem;
-import haxe.ui.containers.properties.Property;
+import haxe.ui.components.NumberStepper;
 import haxe.ui.components.DropDown;
 import haxe.ui.components.Label;
 import haxe.ui.core.Screen;
@@ -18,9 +18,10 @@ import funkin.ui.debug.charting.commands.ExtendNoteLengthCommand;
 class ChartEditorHoldNoteContextMenu extends ChartEditorBaseContextMenu
 {
   var contextmenuNoteKind:Label;
-  var contextmenuPosition:Property;
-  var contextmenuLength:Property;
-  var contextmenuUnit:DropDown;
+  var contextmenuPosition:NumberStepper;
+  var contextmenuLength:NumberStepper;
+  var contextmenuPosUnit:DropDown;
+  var contextmenuLengthUnit:DropDown;
   var contextmenuFlip:MenuItem;
   var contextmenuDelete:MenuItem;
 
@@ -37,8 +38,10 @@ class ChartEditorHoldNoteContextMenu extends ChartEditorBaseContextMenu
     else
       contextmenuNoteKind.text = data.kind;
     this.selectedUnit = selectedUnit;
-    contextmenuUnit.selectedIndex = selectedUnit;
-    contextmenuUnit.value = contextmenuUnit.dataSource.get(contextmenuUnit.selectedIndex);
+    contextmenuPosUnit.selectedIndex = selectedUnit;
+    contextmenuPosUnit.value = contextmenuPosUnit.dataSource.get(contextmenuPosUnit.selectedIndex);
+    contextmenuLengthUnit.selectedIndex = selectedUnit;
+    contextmenuLengthUnit.value = contextmenuLengthUnit.dataSource.get(contextmenuLengthUnit.selectedIndex);
     contextmenuLength.value = data.length;
 
     initialize();
@@ -53,74 +56,53 @@ class ChartEditorHoldNoteContextMenu extends ChartEditorBaseContextMenu
         contextmenuNoteKind.text = data.kind;
     }
     // NOTE: Remember to use commands here to ensure undo/redo works properly
-    contextmenuUnit.onChange = function(_) {
+    contextmenuPosUnit.onChange = function(_) {
       // Why does the dropdown do this after I specifically set the value of the damn thing?
-      if (contextmenuUnit.selectedIndex == -1)
+      if (contextmenuPosUnit.selectedIndex == -1)
       {
-        contextmenuUnit.pauseEvent(UIEvent.CHANGE, true);
-        contextmenuUnit.selectedIndex = selectedUnit;
-        contextmenuUnit.resumeEvent(UIEvent.CHANGE, true, true);
+        contextmenuPosUnit.pauseEvent(UIEvent.CHANGE, true);
+        contextmenuPosUnit.selectedIndex = selectedUnit;
+        contextmenuPosUnit.resumeEvent(UIEvent.CHANGE, true, true);
       }
-      switch (contextmenuUnit.value.id)
+      switch (contextmenuPosUnit.value.id)
       {
         case "MILLISECONDS":
-          contextmenuPosition.label = "Time (MS)";
-          contextmenuLength.label = "Length (MS)";
+          contextmenuPosUnit.text = "Time (MS)";
           if (contextmenuPosition.value != data.time)
           {
             contextmenuPosition.pauseEvent(UIEvent.CHANGE, true);
             contextmenuPosition.value = data.time;
             contextmenuPosition.resumeEvent(UIEvent.CHANGE, true, true);
           }
-          if (contextmenuLength.value != data.length)
-          {
-            contextmenuLength.pauseEvent(UIEvent.CHANGE, true);
-            contextmenuLength.value = data.length;
-            contextmenuLength.resumeEvent(UIEvent.CHANGE, true, true);
-          }
         case "STEPS":
-          contextmenuPosition.label = "Time (Steps)";
-          contextmenuLength.label = "Length (Steps)";
+          contextmenuPosUnit.text = "Time (Steps)";
           if (contextmenuPosition.value != (Math.round(data.getStepTime() / chartEditorState.noteSnapRatio) * chartEditorState.noteSnapRatio))
           {
             contextmenuPosition.pauseEvent(UIEvent.CHANGE, true);
             contextmenuPosition.value = Math.round(data.getStepTime() / chartEditorState.noteSnapRatio) * chartEditorState.noteSnapRatio;
             contextmenuPosition.resumeEvent(UIEvent.CHANGE, true, true);
           }
-          if (contextmenuLength.value != (Math.round(data.getStepLength() / chartEditorState.noteSnapRatio) * chartEditorState.noteSnapRatio))
-          {
-            contextmenuLength.pauseEvent(UIEvent.CHANGE, true);
-            contextmenuLength.value = Math.round(data.getStepLength() / chartEditorState.noteSnapRatio) * chartEditorState.noteSnapRatio;
-            contextmenuLength.resumeEvent(UIEvent.CHANGE, true, true);
-          }
         default:
-          contextmenuPosition.label = "Time (MS)";
-          contextmenuLength.label = "Length (MS)";
+          contextmenuPosUnit.text = "Time (MS)";
           if (contextmenuPosition.value != data.time)
           {
             contextmenuPosition.pauseEvent(UIEvent.CHANGE, true);
             contextmenuPosition.value = data.time;
             contextmenuPosition.resumeEvent(UIEvent.CHANGE, true, true);
           }
-          if (contextmenuLength.value != data.length)
-          {
-            contextmenuLength.pauseEvent(UIEvent.CHANGE, true);
-            contextmenuLength.value = data.length;
-            contextmenuLength.resumeEvent(UIEvent.CHANGE, true, true);
-          }
       }
     }
-    var id:String = contextmenuUnit.dataSource.get(contextmenuUnit.selectedIndex).id;
+    var id:String = contextmenuPosUnit.dataSource.get(contextmenuPosUnit.selectedIndex).id;
 
     contextmenuPosition.onChange = function(_) {
       var newTime:Float = contextmenuPosition.value;
-      if (contextmenuUnit.selectedIndex == -1)
+      if (contextmenuPosUnit.selectedIndex == -1)
       {
-        contextmenuUnit.pauseEvent(UIEvent.CHANGE, true);
-        contextmenuUnit.selectedIndex = selectedUnit;
-        contextmenuUnit.resumeEvent(UIEvent.CHANGE, true);
+        contextmenuPosUnit.pauseEvent(UIEvent.CHANGE, true);
+        contextmenuPosUnit.selectedIndex = selectedUnit;
+        contextmenuPosUnit.resumeEvent(UIEvent.CHANGE, true);
       }
-      switch (contextmenuUnit.value.id)
+      switch (contextmenuPosUnit.value.id)
       {
         case "MILLISECONDS":
           // Don't move the note if we don't have to
@@ -166,15 +148,53 @@ class ChartEditorHoldNoteContextMenu extends ChartEditorBaseContextMenu
       contextmenuPosition.resumeEvent(UIEvent.CHANGE, true, true);
     }
 
+    // Considered just making a label but this is probably better
+    contextmenuLengthUnit.onChange = function(_) {
+      if (contextmenuLengthUnit.selectedIndex == -1)
+      {
+        contextmenuLengthUnit.pauseEvent(UIEvent.CHANGE, true);
+        contextmenuLengthUnit.selectedIndex = selectedUnit;
+        contextmenuLengthUnit.resumeEvent(UIEvent.CHANGE, true, true);
+      }
+      switch (contextmenuLengthUnit.value.id)
+      {
+        case "MILLISECONDS":
+          contextmenuLengthUnit.text = "Length (MS)";
+          if (contextmenuLength.value != data.length)
+          {
+            contextmenuLength.pauseEvent(UIEvent.CHANGE, true);
+            contextmenuLength.value = data.length;
+            contextmenuLength.resumeEvent(UIEvent.CHANGE, true, true);
+          }
+        case "STEPS":
+          contextmenuLengthUnit.text = "Length (Steps)";
+          if (contextmenuLength.value != (Math.round(data.getStepLength() / chartEditorState.noteSnapRatio) * chartEditorState.noteSnapRatio))
+          {
+            contextmenuLength.pauseEvent(UIEvent.CHANGE, true);
+            contextmenuLength.value = Math.round(data.getStepLength() / chartEditorState.noteSnapRatio) * chartEditorState.noteSnapRatio;
+            contextmenuLength.resumeEvent(UIEvent.CHANGE, true, true);
+          }
+        default:
+          contextmenuLengthUnit.text = "Length (MS)";
+          if (contextmenuLength.value != data.length)
+          {
+            contextmenuLength.pauseEvent(UIEvent.CHANGE, true);
+            contextmenuLength.value = data.length;
+            contextmenuLength.resumeEvent(UIEvent.CHANGE, true, true);
+          }
+      }
+    }
+    id = contextmenuLengthUnit.dataSource.get(contextmenuLengthUnit.selectedIndex).id;
+
     contextmenuLength.onChange = function(_) {
       var newLength:Float = contextmenuLength.value;
-      if (contextmenuUnit.selectedIndex == -1)
+      if (contextmenuLengthUnit.selectedIndex == -1)
       {
-        contextmenuUnit.pauseEvent(UIEvent.CHANGE, true);
-        contextmenuUnit.selectedIndex = selectedUnit;
-        contextmenuUnit.resumeEvent(UIEvent.CHANGE, true, true);
+        contextmenuLengthUnit.pauseEvent(UIEvent.CHANGE, true);
+        contextmenuLengthUnit.selectedIndex = selectedUnit;
+        contextmenuLengthUnit.resumeEvent(UIEvent.CHANGE, true, true);
       }
-      switch (contextmenuUnit.value.id)
+      switch (contextmenuLengthUnit.value.id)
       {
         case "MILLISECONDS":
           // Don't change the length of the hold note if we don't have to

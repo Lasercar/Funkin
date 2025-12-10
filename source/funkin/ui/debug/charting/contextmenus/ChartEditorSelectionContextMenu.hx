@@ -2,7 +2,7 @@ package funkin.ui.debug.charting.contextmenus;
 
 #if FEATURE_CHART_EDITOR
 import haxe.ui.containers.menus.MenuItem;
-import haxe.ui.containers.properties.Property;
+import haxe.ui.components.NumberStepper;
 import haxe.ui.components.DropDown;
 import haxe.ui.core.Screen;
 import haxe.ui.events.UIEvent;
@@ -20,7 +20,7 @@ import funkin.ui.debug.charting.commands.DeselectAllItemsCommand;
 @:build(haxe.ui.ComponentBuilder.build("assets/exclude/data/ui/chart-editor/context-menus/selection.xml"))
 class ChartEditorSelectionContextMenu extends ChartEditorBaseContextMenu
 {
-  var contextmenuOffset:Property;
+  var contextmenuOffset:NumberStepper;
   var contextmenuUnit:DropDown;
   var contextmenuOffsetMove:MenuItem;
   var contextmenuCut:MenuItem;
@@ -60,21 +60,21 @@ class ChartEditorSelectionContextMenu extends ChartEditorBaseContextMenu
       switch (contextmenuUnit.value.id)
       {
         case "MILLISECONDS":
-          contextmenuOffset.label = "Offset (MS)";
+          contextmenuUnit.text = "Offset (MS)";
           if (contextmenuOffset.value != 0)
           {
             contextmenuOffset.value = Conductor.instance.getStepTimeInMs(contextmenuOffset.value);
           }
 
         case "STEPS":
-          contextmenuOffset.label = "Offset (Steps)";
+          contextmenuUnit.text = "Offset (Steps)";
           if (contextmenuOffset.value != 0)
           {
             contextmenuOffset.value = Conductor.instance.getTimeInSteps(contextmenuOffset.value);
           }
 
         default:
-          contextmenuOffset.label = "Offset (MS)";
+          contextmenuUnit.text = "Offset (MS)";
           if (contextmenuOffset.value != 0)
           {
             contextmenuOffset.value = Conductor.instance.getStepTimeInMs(contextmenuOffset.value);
