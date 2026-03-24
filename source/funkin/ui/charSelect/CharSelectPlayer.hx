@@ -76,7 +76,7 @@ class CharSelectPlayer extends FunkinSprite implements IBPMSyncedScriptedClass
     }
   };
 
-  public function switchChar(str:String, playSlideAnim:Bool = true):Void
+  public function switchChar(str:String, playSlideAnim:Bool = true, pressedSelect:Bool = false):Void
   {
     var texture:Null<animate.FlxAnimateFrames> = CharSelectAtlasHandler.loadAtlas('charSelect/${str}Chill');
 
@@ -90,7 +90,8 @@ class CharSelectPlayer extends FunkinSprite implements IBPMSyncedScriptedClass
       return;
     }
 
-    final animName:String = playSlideAnim ? "slidein" : "idle";
+    // If select was pressed while switching character, play the confirm animation instead
+    final animName:String = pressedSelect ? "select" : (playSlideAnim ? "slidein" : "idle");
     anim.play(animName, true);
 
     updateHitbox();
