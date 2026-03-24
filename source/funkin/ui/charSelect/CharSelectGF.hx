@@ -123,9 +123,9 @@ class CharSelectGF extends FunkinSprite implements IBPMSyncedScriptedClass
       enableVisualizer = gfData?.visualizer ?? false;
     }
 
-    if (pressedSelect) anim.play("confirm", true);
-    else
-    anim.play("idle", true);
+    final animName:String = pressedSelect ? "confirm" : "idle";
+    anim.play(animName, true);
+    if (pressedSelect) anim.curAnim.looped = true;
 
     updateHitbox();
   }
